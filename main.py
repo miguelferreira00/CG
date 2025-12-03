@@ -152,7 +152,7 @@ def draw_garage_switch():
     light_z = -8.2      
     
     # Color: vermelho se porta fechada, verde se aberta
-    if garage_door_angle < 46:  # fechada ou quase
+    if garage_door_angle < 49:  # fechada ou quase
         r, g, b = 1.0, 0.0, 0.0  # RED
     else:  # aberta
         r, g, b = 0.0, 1.0, 0.0  # GREEN
