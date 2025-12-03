@@ -18,17 +18,127 @@ wheel_angle = 0.0
 speed = 0.0
 acceleration = 0.02
 friction = 0.98
+
 texture_ground = None
+texture_door = None
+
+
+garage_x, garage_z = 10, 30
+garage_door_angle = 0
+door_opening = False
+door_closing = False
+
+
+walls_loaded = False
+door_loaded = False
+walls_vertices, walls_faces = [], []
+door_vertices, door_faces = [], []
 
 
 def init():
-    global texture_ground
+    global texture_ground, walls_loaded, door_loaded
+    global walls_vertices, walls_faces, door_vertices, door_faces
+    global texture_door 
+   
 
     glEnable(GL_DEPTH_TEST)       # depth
     glClearColor(0.5, 0.7, 1.0, 1.0)  # background color
     glEnable(GL_TEXTURE_2D)   
 
     texture_ground = load_texture("texture_ground.jpg")
+    texture_door = load_texture("door_text.jpg")
+
+    walls_vertices, walls_faces = load_obj_file("garage.obj")   
+    door_vertices, door_faces = load_obj_file("door.obj") 
+
+    if walls_vertices:
+        walls_loaded = True
+    if door_vertices:
+        door_loaded = True 
+
+
+def draw_garage_walls():
+    """Draw the garage walls from garage.obj"""
+    if not walls_loaded:
+        return
+    
+    glPushMatrix()
+    glTranslatef(garage_x, 0, garage_z)
+    
+    
+    glScalef(1, 1, 1)  
+    
+    #cor das paredes
+    glColor3f(0.7, 0.7, 0.7)  # cinzento claro
+    
+    # faces
+    for face in walls_faces:
+        if len(face) >= 3:
+            glBegin(GL_POLYGON)
+            for vertex_idx in face:
+                if vertex_idx < len(walls_vertices):
+                    glVertex3fv(walls_vertices[vertex_idx])
+            glEnd()
+    
+    glPopMatrix()
+
+
+def draw_garage_door():
+ 
+    if not door_loaded:
+        return
+    
+    glPushMatrix()
+    glTranslatef(garage_x, 0, garage_z)
+    glScalef(1, 1, 1)
+    
+    glEnable(GL_TEXTURE_2D)
+    glBindTexture(GL_TEXTURE_2D, texture_door)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP)
+    glColor3f(1, 1, 1)
+    
+    if door_vertices:
+        min_y = min(v[1] for v in door_vertices)
+        max_y = max(v[1] for v in door_vertices)
+        min_x = min(v[0] for v in door_vertices)
+        max_x = max(v[0] for v in door_vertices)
+        
+        door_height = max_y - min_y
+        ceiling_y = 3.7
+        
+        # para de rolar para cime quando atingir o teto
+        max_rollup = ceiling_y - min_y  # Maximo 
+        rollup_amount = min(
+            (garage_door_angle / 90.0) * door_height,
+            max_rollup
+        )
+        
+        for face in door_faces:
+            if len(face) >= 3:
+                glBegin(GL_POLYGON)
+                for vertex_idx in face:
+                    if vertex_idx < len(door_vertices):
+                        x, y, z = door_vertices[vertex_idx]
+                        
+                        cutoff_y = min_y + rollup_amount
+                        
+                        if y < cutoff_y:
+                            y_transformed = y + rollup_amount
+                        else:
+                            y_transformed = y
+                        
+                        u = (x - min_x) / (max_x - min_x)
+                        v = (y - min_y) / door_height
+                        glTexCoord2f(u, v)
+                        glVertex3f(x, y_transformed, z)
+                glEnd()
+    
+    glBindTexture(GL_TEXTURE_2D, texture_ground)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
+    
+    glPopMatrix()
 
 def draw_ground():
     glBindTexture(GL_TEXTURE_2D, texture_ground)
@@ -135,6 +245,42 @@ def load_texture(path):
 
     return tex_id
 
+def load_obj_file(filename):
+    #carregar os vertices do obje file
+    vertices = []
+    faces = []
+    
+    try:
+        with open(filename, 'r') as f:
+            for line in f:
+                line = line.strip()
+                
+                # Ignorar comentários e outros elementos 
+                if line.startswith('#') or line.startswith('mtllib') or line.startswith('usemtl'):
+                    continue
+                
+                # Vertex: "v x y z"
+                if line.startswith('v '):
+                    parts = line.split()
+                    x, y, z = float(parts[1]), float(parts[2]), float(parts[3])
+                    vertices.append([x, y, z])
+                
+                # Face: "f v1/vt1/vn1 v2/vt2/vn2 ..."
+                elif line.startswith('f '):
+                    parts = line.split()
+                    face = []
+                    for i in range(1, len(parts)):  
+                        vertex_idx = int(parts[i].split('/')[0]) - 1  
+                        face.append(vertex_idx)
+                    faces.append(face)
+        
+        print(f" Loaded {filename}: {len(vertices)} vertices, {len(faces)} faces")
+        return vertices, faces
+        
+    except Exception as e:
+        print(f"Error loading {filename}: {e}")
+        return None, None
+
 def draw_wheel(x, y, z, rotate_angle, side):
     glPushMatrix()
     glTranslatef(x, y, z)
@@ -228,6 +374,7 @@ def draw_car():
 
 def keyboard(key, x, y):
     global cam_angle, wheel_angle, speed
+    global door_opening, door_closing 
     turn = 5
 
     if key == b'w': # front
@@ -244,14 +391,30 @@ def keyboard(key, x, y):
         cam_angle -= turn
     elif key == b'e':
         cam_angle += turn
+    elif key == b'o':  # Open door
+        door_opening = True
+        door_closing = False
+    elif key == b'c':  # Close door
+        door_closing = True
+        door_opening = False
 
     glutPostRedisplay() # redraw the scene
 
 def display():
     global wheel_angle, cam_x, cam_z, car_angle, speed, car_x, car_z
+    global garage_door_angle, door_opening, door_closing
+    
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glLoadIdentity()
 
+    if door_opening and garage_door_angle < 90:
+        garage_door_angle += 3
+        
+    
+    elif door_closing and garage_door_angle > 0:
+        garage_door_angle -= 3
+
+    
     speed *= friction
     if abs(speed) < 0.001:
         speed = 0
@@ -280,6 +443,8 @@ def display():
           0, 1, 0)
 
     draw_ground()  # draw the ground plane
+    draw_garage_walls()   # Walls from garage.obj
+    draw_garage_door()    # Animated door from door.obj
     # draw a simple cube
     draw_car()
 
