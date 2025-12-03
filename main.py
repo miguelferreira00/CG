@@ -140,6 +140,42 @@ def draw_garage_door():
     
     glPopMatrix()
 
+def draw_garage_switch():
+    glPushMatrix()
+    glTranslatef(garage_x, 0, garage_z)
+    
+    glDisable(GL_TEXTURE_2D)
+    
+    # no centro, por cima da porta 
+    light_x = 0.0        
+    light_y = 4        
+    light_z = -8.2      
+    
+    # Color: vermelho se porta fechada, verde se aberta
+    if garage_door_angle < 46:  # fechada ou quase
+        r, g, b = 1.0, 0.0, 0.0  # RED
+    else:  # aberta
+        r, g, b = 0.0, 1.0, 0.0  # GREEN
+    
+    #luz 
+    glColor3f(r, g, b)
+    glPushMatrix()
+    glTranslatef(light_x, light_y, light_z) 
+    glutSolidSphere(0.08, 12, 12)
+    
+    # brilho
+    glEnable(GL_BLEND)
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+    glColor4f(r, g, b, 0.2)
+    glutSolidSphere(0.15, 12, 12)
+    glDisable(GL_BLEND)
+    glPopMatrix()
+    
+
+    glEnable(GL_TEXTURE_2D)
+    glPopMatrix()
+
+
 def draw_ground():
     glBindTexture(GL_TEXTURE_2D, texture_ground)
 
@@ -445,6 +481,7 @@ def display():
     draw_ground()  # draw the ground plane
     draw_garage_walls()   # Walls from garage.obj
     draw_garage_door()    # Animated door from door.obj
+    draw_garage_switch()  # Light switch with indicator
     # draw a simple cube
     draw_car()
 
