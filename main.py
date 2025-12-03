@@ -23,7 +23,7 @@ texture_ground = None
 texture_door = None
 
 
-garage_x, garage_z = 10, 30
+garage_x, garage_z = 0, 30
 garage_door_angle = 0
 door_opening = False
 door_closing = False
