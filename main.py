@@ -15,6 +15,9 @@ cam_angle = 0.0
 car_x, car_z = 0.0, 0.0
 car_angle = 0.0
 wheel_angle = 0.0
+speed = 0.0
+acceleration = 0.02
+friction = 0.98
 texture_ground = None
 
 
@@ -216,7 +219,7 @@ def draw_car():
     # steering wheel
     glPushMatrix()
     glTranslatef(-0.5, -0.15, 0.5)      # posição no carro
-    glRotatef(wheel_angle, 0, 1, 0)     # aplica rotação do volante sobre Y
+    glRotatef(wheel_angle, 0, 0, 1)     # aplica rotação do volante sobre Y
     draw_steering_wheel(0, 0, 0)        # desenha volante local
     glPopMatrix()
 
@@ -224,21 +227,19 @@ def draw_car():
 
 
 def keyboard(key, x, y):
-    global cam_angle, car_x, car_z, car_angle, wheel_angle
+    global cam_angle, wheel_angle, speed
     turn = 5
-    step = 0.5
+
     if key == b'w': # front
-        car_x += step * math.sin(math.radians(car_angle))
-        car_z += step * math.cos(math.radians(car_angle))
+        speed += acceleration
+        speed = min(speed, 0.2)
     elif key == b's': # back
-        car_x -= step * math.sin(math.radians(car_angle))
-        car_z -= step * math.cos(math.radians(car_angle))
+        speed -= acceleration
+        speed = max(-0.1, speed)    
     elif key == b'a': # left
-        car_angle += turn 
-        wheel_angle = max(-45, wheel_angle - 5) #steering wheel turns max 45°
+        wheel_angle = max(-45, wheel_angle - turn) #steering wheel turns max 45°
     elif key == b'd': # right
-        car_angle -= turn
-        wheel_angle = min(45, wheel_angle + 5)
+        wheel_angle = min(45, wheel_angle + turn)
     elif key == b'q':
         cam_angle -= turn
     elif key == b'e':
@@ -247,22 +248,35 @@ def keyboard(key, x, y):
     glutPostRedisplay() # redraw the scene
 
 def display():
-    global wheel_angle
+    global wheel_angle, cam_x, cam_z, car_angle, speed, car_x, car_z
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glLoadIdentity()
 
-    # convert angle into coords
-    cam_x = cam_radius * math.sin(math.radians(cam_angle))
-    cam_z = cam_radius * math.cos(math.radians(cam_angle))
+    speed *= friction
+    if abs(speed) < 0.001:
+        speed = 0
 
+    car_angle += (speed * wheel_angle) / 50.0
+    
+
+    # update position
+    car_x += speed * math.sin(math.radians(car_angle))
+    car_z += speed * math.cos(math.radians(car_angle))
+
+    #car position
+    target_x, target_y, target_z = car_x, 0.0, car_z
+    distance = 6.0 # distance to the car
+    height = 2.0 # cam height
+
+    # convert angle into coords
+    cam_x = target_x - distance * math.sin(math.radians(car_angle))
+    cam_z = target_z - distance * math.cos(math.radians(car_angle))
+    cam_y = height
 
 
     # Câmara
-    # gluLookAt(cam_x, cam_y, cam_z,   # cam position
-    #           look_x, look_y, look_z,   # where to look
-    #           0, 1, 0)   # vetor "up"
     gluLookAt(cam_x, cam_y, cam_z,
-          0, 0, 0,
+          target_x, target_y, target_z,
           0, 1, 0)
 
     draw_ground()  # draw the ground plane
