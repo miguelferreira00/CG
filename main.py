@@ -2,6 +2,9 @@ from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
 import math
+import numpy as np
+from PIL import Image
+
 
 front_rotation = 0.0
 back_rotation = 0.0
@@ -12,10 +15,40 @@ cam_angle = 0.0
 car_x, car_z = 0.0, 0.0
 car_angle = 0.0
 wheel_angle = 0.0
+texture_ground = None
+
 
 def init():
+    global texture_ground
+
     glEnable(GL_DEPTH_TEST)       # depth
-    glClearColor(0.1, 0.1, 0.1, 1.0)  # background color
+    glClearColor(0.5, 0.7, 1.0, 1.0)  # background color
+    glEnable(GL_TEXTURE_2D)   
+
+    texture_ground = load_texture("texture_ground.jpg")
+
+def draw_ground():
+    glBindTexture(GL_TEXTURE_2D, texture_ground)
+
+    tile_repeat = 35  # how many times the texture repeats across the floor size
+
+    glBegin(GL_QUADS)
+    glColor3f(1, 1, 1)
+
+    glTexCoord2f(0, 0)
+    glVertex3f(-50, -0.51, -50)
+
+    glTexCoord2f(tile_repeat, 0)
+    glVertex3f(50, -0.51, -50)
+
+    glTexCoord2f(tile_repeat, tile_repeat)
+    glVertex3f(50, -0.51, 50)
+
+    glTexCoord2f(0, tile_repeat)
+    glVertex3f(-50, -0.51, 50)
+
+    glEnd()
+
 
 def draw_body():
     # Fundo (paralelepípedo achatado)
@@ -74,6 +107,30 @@ def draw_body():
     # glScalef(2, 0.7, 1.4) # smaller than base
     # glutSolidCube(1.0)
     # glPopMatrix()
+
+
+def load_texture(path):
+    img = Image.open(path)
+    img = img.transpose(Image.FLIP_TOP_BOTTOM)  # OpenGL reads upside-down
+    img_data = img.convert("RGB").tobytes()
+
+    width, height = img.size
+
+    tex_id = glGenTextures(1)
+    glBindTexture(GL_TEXTURE_2D, tex_id)
+
+    # carregar textura
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
+                 width, height, 0,
+                 GL_RGB, GL_UNSIGNED_BYTE, img_data)
+
+    # parâmetros da textura
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
+
+    return tex_id
 
 def draw_wheel(x, y, z, rotate_angle, side):
     glPushMatrix()
@@ -136,7 +193,7 @@ def draw_steering_wheel(x, y, z):
 
 def draw_car():
     glPushMatrix()
-    glTranslatef(car_x, 0.0, car_z)
+    glTranslatef(car_x, 0.5, car_z)
     glRotatef(car_angle, 0, 1, 0)
 
     draw_body()
@@ -208,7 +265,7 @@ def display():
           0, 0, 0,
           0, 1, 0)
 
-
+    draw_ground()  # draw the ground plane
     # draw a simple cube
     draw_car()
 
