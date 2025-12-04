@@ -58,7 +58,7 @@ def init():
 
 
 def draw_garage_walls():
-    """Draw the garage walls from garage.obj"""
+   
     if not walls_loaded:
         return
     
@@ -168,10 +168,10 @@ def draw_garage_switch():
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
     glColor4f(r, g, b, 0.2)
     glutSolidSphere(0.15, 12, 12)
+
+    
     glDisable(GL_BLEND)
     glPopMatrix()
-    
-
     glEnable(GL_TEXTURE_2D)
     glPopMatrix()
 
@@ -207,6 +207,7 @@ def draw_body():
     glScalef(2.0, 0.1, 4.0)        # largura X, espessura Y, comprimento Z
     glutSolidCube(1.0)
     glPopMatrix()
+    
 
     # Parede esquerda
     glPushMatrix()
@@ -256,6 +257,8 @@ def draw_body():
     # glScalef(2, 0.7, 1.4) # smaller than base
     # glutSolidCube(1.0)
     # glPopMatrix()
+
+    
 
 
 def load_texture(path):
@@ -317,12 +320,15 @@ def load_obj_file(filename):
         print(f"Error loading {filename}: {e}")
         return None, None
 
-def draw_wheel(x, y, z, rotate_angle, side):
+def draw_wheel(x, y, z, rotate_angle, side, is_back=False):
     glPushMatrix()
     glTranslatef(x, y, z)
 
     # alinhar roda vertical
     glRotatef(90, 0, 1, 0)
+
+    if is_back:
+        glScalef(1.2, 1.2, 1.2)  # rodas traseiras maiores
 
     # orientação tangente à base
     if side == "left":
@@ -386,8 +392,8 @@ def draw_car():
     # wheels
     draw_wheel(-1.1, -0.5, 1.0, front_rotation, "left") # left front
     draw_wheel(1.1, -0.5, 1.0, front_rotation, "right") # right front
-    draw_wheel(-1.1, -0.5, -1.0, back_rotation, "left") # left back
-    draw_wheel(1.1, -0.5, -1.0, back_rotation, "right") # right back
+    draw_wheel(-1.1, -0.5, -1.0, back_rotation, "left", True) # left back
+    draw_wheel(1.1, -0.5, -1.0, back_rotation, "right", True) # right back
 
      # front seats
     draw_seat(-0.5, -0.25, -0.3)   # left seat
