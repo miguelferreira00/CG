@@ -414,6 +414,7 @@ def draw_car():
     glPopMatrix()
 
 
+
 def keyboard(key, x, y):
     global cam_angle, wheel_angle, speed
     global door_opening, door_closing 
@@ -449,6 +450,7 @@ def display():
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glLoadIdentity()
 
+  
     if door_opening and garage_door_angle < 90:
         garage_door_angle += 3
         
@@ -473,16 +475,17 @@ def display():
     distance = 6.0 # distance to the car
     height = 2.0 # cam height
 
-    # convert angle into coords
-    cam_x = target_x - distance * math.sin(math.radians(car_angle))
-    cam_z = target_z - distance * math.cos(math.radians(car_angle))
+    # angulo total
+    total_angle = car_angle + cam_angle
+    
+    cam_x = target_x - distance * math.sin(math.radians(total_angle))
+    cam_z = target_z - distance * math.cos(math.radians(total_angle))
     cam_y = height
-
-
-    # Câmara
+    
+    # Camera a olhar para o car
     gluLookAt(cam_x, cam_y, cam_z,
-          target_x, target_y, target_z,
-          0, 1, 0)
+              target_x, target_y, target_z,
+              0, 1, 0)
 
     draw_ground()  # draw the ground plane
     draw_garage_walls()   # Walls from garage.obj
