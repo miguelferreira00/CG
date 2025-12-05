@@ -6,18 +6,27 @@ import numpy as np
 from PIL import Image
 
 
+
 front_rotation = 0.0
 back_rotation = 0.0
 cam_x, cam_y, cam_z = 0.0, 2.0, 6.0 # initial position
 look_x, look_y, look_z = 0.0, -0.5, 0.0 # where to look
 cam_radius = 6.0
 cam_angle = 0.0
-car_x, car_z = 0.0, 0.0
+car_x, car_y, car_z = 0.0, 0.5, 0.0
 car_angle = 0.0
+wheel_rotation = 0.0
 wheel_angle = 0.0
 speed = 0.0
 acceleration = 0.02
 friction = 0.98
+
+car_left_door_angle = 90.0
+car_right_door_angle = 90.0
+car_left_door_closing = False
+car_left_door_opening = False
+car_right_door_closing = False
+car_right_door_opening = False
 
 texture_ground = None
 texture_door = None
@@ -388,7 +397,30 @@ def draw_car():
     glRotatef(car_angle, 0, 1, 0)
 
     draw_body()
-    
+
+
+    #porta esquerda 
+    glPushMatrix()
+    glTranslatef(-1.0, -0.25, 0.2)
+    glRotatef(car_left_door_angle, 0, 1, 0)
+    glTranslatef(0.5, 0.0, 0.0)
+    glColor3f(1.0, 0.0, 0.0)
+    glScalef(0.9, 0.5, 0.1)
+    glutSolidCube(1.0)
+    glPopMatrix()
+
+
+    # porta direita
+    glPushMatrix()
+    glTranslatef(1.0, -0.25, 0.2)
+    glRotatef(-car_right_door_angle, 0, 1, 0)
+    glTranslatef(-0.5, 0.0, 0.0)
+    glColor3f(1.0, 0.0, 0.0)
+    glScalef(0.9, 0.5, 0.1)
+    glutSolidCube(1.0)
+    glPopMatrix()
+
+
     # wheels
     draw_wheel(-1.1, -0.5, 1.0, front_rotation, "left") # left front
     draw_wheel(1.1, -0.5, 1.0, front_rotation, "right") # right front
@@ -414,10 +446,13 @@ def draw_car():
     glPopMatrix()
 
 
-
 def keyboard(key, x, y):
     global cam_angle, wheel_angle, speed
     global door_opening, door_closing 
+    global car_left_door_angle, car_right_door_angle
+    global car_left_door_opening, car_left_door_closing
+    global car_right_door_opening, car_right_door_closing
+
     turn = 5
 
     if key == b'w': # front
@@ -440,17 +475,32 @@ def keyboard(key, x, y):
     elif key == b'c':  # Close door
         door_closing = True
         door_opening = False
+    elif key == b'r': #open right 
+        car_right_door_closing = False
+        car_right_door_opening = True
+    elif key == b't': #close right 
+        car_right_door_closing = True
+        car_right_door_opening = False
+    elif key == b'y': #open left
+        car_left_door_closing = False
+        car_left_door_opening = True
+    elif key == b'u': # close left
+        car_left_door_closing = True
+        car_left_door_opening = False
 
     glutPostRedisplay() # redraw the scene
 
 def display():
     global wheel_angle, cam_x, cam_z, car_angle, speed, car_x, car_z
     global garage_door_angle, door_opening, door_closing
+    global car_left_door_angle, car_right_door_angle
+    global car_left_door_opening, car_left_door_closing
+    global car_right_door_opening, car_right_door_closing
+
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glLoadIdentity()
 
-  
     if door_opening and garage_door_angle < 90:
         garage_door_angle += 3
         
@@ -470,22 +520,50 @@ def display():
     car_x += speed * math.sin(math.radians(car_angle))
     car_z += speed * math.cos(math.radians(car_angle))
 
-    #car position
-    target_x, target_y, target_z = car_x, 0.0, car_z
-    distance = 6.0 # distance to the car
-    height = 2.0 # cam height
 
-    # angulo total
-    total_angle = car_angle + cam_angle
+    #portas do carro
+    door_step= 3.5
+
+    # left door
+    if car_left_door_opening and car_left_door_angle < 180.0:
+        car_left_door_angle += door_step
+        if car_left_door_angle > 180.0:
+            car_left_door_angle = 180.0
+            car_left_door_opening = False
+    elif car_left_door_closing and car_left_door_angle > 90.0:
+        car_left_door_angle -= door_step
+        if car_left_door_angle < 90.0:
+            car_left_door_angle = 90.0
+            car_left_door_closing = False
+
+    # right door
+    if car_right_door_opening and car_right_door_angle < 180.0:
+        car_right_door_angle += door_step
+        if car_right_door_angle > 180.0:
+            car_right_door_angle = 180.0
+            car_right_door_opening = False
+    elif car_right_door_closing and car_right_door_angle > 90.0:
+        car_right_door_angle -= door_step
+        if car_right_door_angle < 90.0:
+            car_right_door_angle = 90.0
+            car_right_door_closing = False
+
+
+    # Câmara
     
-    cam_x = target_x - distance * math.sin(math.radians(total_angle))
-    cam_z = target_z - distance * math.cos(math.radians(total_angle))
-    cam_y = height
-    
-    # Camera a olhar para o car
+    cam_dist = 10 #Distancia da camara ao carro
+
+    # calcular nova posição da câmara
+    cam_x = car_x - cam_dist * math.sin(math.radians(cam_angle))
+    cam_z = car_z - cam_dist * math.cos(math.radians(cam_angle))
+
+    cam_y = 6 #altura da camara
+
+    # aplicar a nova camara
     gluLookAt(cam_x, cam_y, cam_z,
-              target_x, target_y, target_z,
-              0, 1, 0)
+            car_x, car_y, car_z,
+            0, 1, 0)
+
 
     draw_ground()  # draw the ground plane
     draw_garage_walls()   # Walls from garage.obj
