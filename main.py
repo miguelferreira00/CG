@@ -218,19 +218,35 @@ def draw_body():
     glPopMatrix()
     
 
-    # Parede esquerda
+    # Parede direita (atras da porta)
     glPushMatrix()
     glColor3f(1.0, 0.0, 0.0)
-    glTranslatef(-1.0, -0.25, 0.0) # posição à esquerda
-    glScalef(0.1, 0.5, 4.0)        # espessura X, altura Y, comprimento Z
+    glTranslatef(-1.0, -0.25, -1.3) # posição depois da porta direita
+    glScalef(0.1, 0.5, 1.3)       # espessura X, altura Y, comprimento Z
     glutSolidCube(1.0)
     glPopMatrix()
 
-    # Parede direita
+    # Parede direita (a frente da porta)
     glPushMatrix()
     glColor3f(1.0, 0.0, 0.0)
-    glTranslatef(1.0, -0.25, 0.0)  # posição à direita
-    glScalef(0.1, 0.5, 4.0)
+    glTranslatef(-1.0, -0.25, 0.4) # posição antes da porta direita
+    glScalef(0.1, 0.5, 0.5)        # espessura X, altura Y, comprimento Z
+    glutSolidCube(1.0)
+    glPopMatrix()
+
+    # Parede esquerda (atras da porta)
+    glPushMatrix()
+    glColor3f(1.0, 0.0, 0.0)
+    glTranslatef(1.0, -0.25, -1.3)  # posição depois da porta esquerda
+    glScalef(0.1, 0.5, 1.3)
+    glutSolidCube(1.0)
+    glPopMatrix()
+
+    # Parede esquerda (a frente da porta)
+    glPushMatrix()
+    glColor3f(1.0, 0.0, 0.0)
+    glTranslatef(1.0, -0.25,0.4)  # posição depois da porta esquerda
+    glScalef(0.1, 0.5, 0.5)
     glutSolidCube(1.0)
     glPopMatrix()
 
@@ -401,22 +417,22 @@ def draw_car():
 
     #porta esquerda 
     glPushMatrix()
-    glTranslatef(-1.0, -0.25, 0.2)
+    glTranslatef(-1.0, -0.25, 0.24)
     glRotatef(car_left_door_angle, 0, 1, 0)
     glTranslatef(0.5, 0.0, 0.0)
     glColor3f(1.0, 0.0, 0.0)
-    glScalef(0.9, 0.5, 0.1)
+    glScalef(0.8, 0.5, 0.1)
     glutSolidCube(1.0)
     glPopMatrix()
 
 
     # porta direita
     glPushMatrix()
-    glTranslatef(1.0, -0.25, 0.2)
+    glTranslatef(1.0, -0.25, 0.24)
     glRotatef(-car_right_door_angle, 0, 1, 0)
     glTranslatef(-0.5, 0.0, 0.0)
     glColor3f(1.0, 0.0, 0.0)
-    glScalef(0.9, 0.5, 0.1)
+    glScalef(0.8, 0.5, 0.1)
     glutSolidCube(1.0)
     glPopMatrix()
 
